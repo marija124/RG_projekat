@@ -1,6 +1,12 @@
 #version 330 core
 out vec4 FragColor;
 
+struct DirLight {
+    vec3 direction;
+    vec3 ambient;
+    vec3 diffuse;
+    vec3 specular;
+};
 struct PointLight {
     vec3 position;
 
@@ -23,10 +29,12 @@ in vec2 TexCoords;
 in vec3 Normal;
 in vec3 FragPos;
 
+uniform DirLight dirLight;
 uniform PointLight pointLight;
 uniform Material material;
 
 uniform vec3 viewPosition;
+uniform bool blinn;
 // calculates the color when using a point light.
 vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir)
 {
@@ -48,11 +56,48 @@ vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir)
     specular *= attenuation;
     return (ambient + diffuse + specular);
 }
+// calculates the color when using a directional light.
+vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir)
+{
+    vec3 lightDir = normalize(-light.direction);
+    // diffuse shading
+    float diff = max(dot(normal, lightDir), 0.0);
+    // specular shading
+    vec3 reflectDir = reflect(-lightDir, normal);
+    float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
+    // combine results
+    vec3 ambient = light.ambient * vec3(texture(material.texture_diffuse1, TexCoords));
+    vec3 diffuse = light.diffuse * diff * vec3(texture(material.texture_diffuse1, TexCoords));
+    vec3 specular = light.specular * spec * vec3(texture(material.texture_specular1, TexCoords).xxx);
+    return (ambient + diffuse + specular);
+}
 
 void main()
 {
-    vec3 normal = normalize(Normal);
-    vec3 viewDir = normalize(viewPosition - FragPos);
-    vec3 result = CalcPointLight(pointLight, normal, FragPos, viewDir);
-    FragColor = vec4(result, 1.0);
-}
+    vec3 color = texture(material.texture_diffuse1, TexCoords).rgb;
+            // ambient
+        vec3 ambient = 0.05 * color;
+            // diffuse
+        vec3 lightDir = normalize(pointLight.position - FragPos);
+        vec3 normal = normalize(Normal);
+        float diff = max(dot(lightDir, normal), 0.0);
+        vec3 diffuse = diff * color;
+            // specular
+        vec3 viewDir = normalize(viewPosition - FragPos);
+        vec3 reflectDir = reflect(-lightDir, normal);
+        float spec = 0.0;
+        if(blinn)
+        {
+             vec3 halfwayDir = normalize(lightDir + viewDir);
+             spec = pow(max(dot(normal, halfwayDir), 0.0), 32.0);
+        }
+        else
+        {
+            vec3 reflectDir = reflect(-lightDir, normal);
+            spec = pow(max(dot(viewDir, reflectDir), 0.0), 8.0);
+        }
+        vec3 specular = vec3(0.3) * spec; // assuming bright white light color
+        vec3 result = ambient + diffuse + specular;
+        result += CalcDirLight(dirLight, normal, viewDir);
+        result += CalcPointLight(pointLight, normal, FragPos, viewDir);
+        FragColor = vec4(result, 1.0);}
