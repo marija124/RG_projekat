@@ -23,12 +23,16 @@ void mouse_callback(GLFWwindow *window, double xpos, double ypos);
 void scroll_callback(GLFWwindow *window, double xoffset, double yoffset);
 unsigned int loadCubemap(vector<std::string> faces);
 void processInput(GLFWwindow *window);
-
+unsigned int loadTexture(char const * path, bool gammaCorrection);
 void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods);
 
 // settings
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
+
+//blin
+bool blinn = false;
+bool blinnKeyPressed = false;
 
 // camera
 
@@ -151,6 +155,7 @@ int main() {
     if (programState->ImGuiEnabled) {
         glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
     }
+
     // Init Imgui
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -164,23 +169,46 @@ int main() {
 
     // configure global opengl state
     // -----------------------------
+
+
     glEnable(GL_DEPTH_TEST);
+
+    //face culling
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
+
+    //blend
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     // build and compile shaders
     // -------------------------
-    Shader ourShader("resources/shaders/2.model_lighting.vs", "resources/shaders/2.model_lighting.fs");
-    //Shader shader("resources/shaders/3.1.blending.fs", "resources/shaders/3.1.blending.vs");
-    Shader skyboxShader("resources/shaders/6.1.skybox.vs", "resources/shaders/6.1.skybox.fs");
+    Shader ourShader("resources/shaders/model_lighting.vs", "resources/shaders/model_lighting.fs");
+    Shader blendingShader("resources/shaders/blending.fs", "resources/shaders/blending.vs");
+    Shader skyboxShader("resources/shaders/skybox.vs", "resources/shaders/skybox.fs");
+    Shader grassShader("resources/shaders/normal_mapping.vs", "resources/shaders/normal_mapping.fs");
+
+   //tekstura za normal mapping
+    unsigned int diffuseMap = loadTexture(FileSystem::getPath("resources/textures/ground_0040_color_2k.jpg").c_str(),
+                                          true);
+    unsigned int normalMap  = loadTexture(FileSystem::getPath("resources/textures/ground_0040_normal_opengl_2k.png").c_str(),
+                                          true);
+
+    unsigned int plava  = loadTexture(FileSystem::getPath("resources/textures/plastic_0010_color_2k.jpg").c_str(),true);
 
     // load models
     // -----------
-    Model ourModel("resources/objects/backpack/backpack.obj");
-    Model ourModel1("resources/objects/Tree/Tree.obj");
 
-    ourModel.SetShaderTextureNamePrefix("material.");
-    ourModel1.SetShaderTextureNamePrefix("material.");
+    Model drvo("resources/objects/Tree/Tree.obj");
+    Model zensko("resources/objects/Bobblehead__Tennis_Player_woman_v1_L1.12a9593712-f912-48d6-8b56-c6f4fa6dd940/18649 Bobblehead - Tennis Player, woman_v1_NEW.obj");
+    Model musko("resources/objects/Bobblehead_Tennis_Player_man_v1_L1.123cbff6d95d-687c-43bc-959f-2319790f3e39/18650_Bobblehead_Tennis_Player_man_v1.obj");
+    Model kocka("resources/objects/kocka/uploads_files_2904624_cube.obj");
+
+
+    drvo.SetShaderTextureNamePrefix("material.");
+    zensko.SetShaderTextureNamePrefix("material.");
+    musko.SetShaderTextureNamePrefix("material.");
+    kocka.SetShaderTextureNamePrefix("material.");
 
     DirLight& dirLight = programState->dirLight;
     dirLight.direction = glm::vec3( 0.0f, 30.0f, 40.0f);
@@ -198,6 +226,8 @@ int main() {
     pointLight.constant = 1.0f;
     pointLight.linear = 0.09f;
     pointLight.quadratic = 0.032f;
+
+
 
     float skyboxVertices[] = {
             // positions
@@ -244,6 +274,7 @@ int main() {
             1.0f, -1.0f,  1.0f
     };
 
+
     // skybox VAO
     unsigned int skyboxVAO, skyboxVBO;
     glGenVertexArrays(1, &skyboxVAO);
@@ -264,14 +295,19 @@ int main() {
                     FileSystem::getPath("resources/textures/skybox/front.jpg"),
                     FileSystem::getPath("resources/textures/skybox/back.jpg")
             };
+
     unsigned int cubemapTexture = loadCubemap(faces);
 
     skyboxShader.use();
     skyboxShader.setInt("skybox", 0);
 
+    /*grassShader.use();
+    grassShader.setInt("diffuseMap", 0);
+    grassShader.setInt("normalMap", 1);
     // draw in wireframe
-    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);*/
 
+    glm::vec3 lightPos(0.0f, 0.0f, 0.0f);
     // render loop
     // -----------
     while (!glfwWindowShouldClose(window)) {
@@ -308,8 +344,11 @@ int main() {
         ourShader.setFloat("pointLight.constant", pointLight.constant);
         ourShader.setFloat("pointLight.linear", pointLight.linear);
         ourShader.setFloat("pointLight.quadratic", pointLight.quadratic);
+        ourShader.setVec3("lightPos", lightPos);
         ourShader.setVec3("viewPosition", programState->camera.Position);
         ourShader.setFloat("material.shininess", 32.0f);
+        ourShader.setInt("blinn", blinn);
+
 
         // view/projection transformations
         glm::mat4 projection = glm::perspective(glm::radians(programState->camera.Zoom),
@@ -320,6 +359,42 @@ int main() {
 
 
 
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, plava);
+        glm::mat4 model1 = glm::mat4(1.0f);
+        model1 = glm::translate(model1,glm::vec3(-2.0f,-2.0f,1.0f)); // translate it down so it's at the center of the scene
+        model1 = glm::rotate(model1, float(-1.5708f),glm::vec3(1.0f, 0.0f, 0.0f));
+        model1 = glm::scale(model1, glm::vec3(0.1f));    // it's a bit too big for our scene, so scale it down
+        ourShader.setMat4("model", model1);
+        zensko.Draw(ourShader);
+
+        glm::mat4 model2 = glm::mat4(1.0f);
+        model2 = glm::translate(model2,glm::vec3(1.0f,-2.5f,-1.0f)); // translate it down so it's at the center of the scene
+        model2 = glm::rotate(model2, float(-1.5708f),glm::vec3(1.0f, 0.0f, 0.0f));
+        model2 = glm::rotate(model2, float(-0.5708f),glm::vec3(0.0f, 0.0f, 1.0f));
+        model2 = glm::scale(model2, glm::vec3(0.1f));// it's a bit too big for our scene, so scale it down
+        ourShader.setMat4("model", model2);
+        musko.Draw(ourShader);
+
+        blendingShader.use();
+
+        glm::mat4 model0 = glm::mat4(1.0f);
+        model0 = glm::translate(model0, glm::vec3(0.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
+        model0 = glm::scale(model0, glm::vec3(1.0f, 1.0f, 1.0f));	// it's a bit too big for our scene, so scale it down
+        ourShader.setMat4("model", model0);
+        drvo.Draw(blendingShader);
+
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, diffuseMap);
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, normalMap);
+
+        glm::mat4 model = glm::mat4(1.0f);
+        model = glm::translate(model, glm::vec3(0.0f, -4.0f, 0.0f)); // translate it down so it's at the center of the scene
+        model = glm::scale(model, glm::vec3(1.8f, 1.8f, 1.8f));	// it's a bit too big for our scene, so scale it down
+        ourShader.setMat4("model", model);
+        kocka.Draw(ourShader);
+
         // render the loaded model
        /* glm::mat4 model = glm::mat4(1.0f);
         model = glm::translate(model,
@@ -329,16 +404,21 @@ int main() {
         ourModel.Draw(ourShader);*/
 
 
-        glm::mat4 model1 = glm::mat4(1.0f);
-        model1 = glm::translate(model1,
-                               glm::vec3(0.0f,0.0f,0.0f)); // translate it down so it's at the center of the scene
-        model1 = glm::scale(model1, glm::vec3(2.0f));    // it's a bit too big for our scene, so scale it down
-        ourShader.setMat4("model", model1);
-        ourModel1.Draw(ourShader);
 
 
 
+       grassShader.use();
+        grassShader.setMat4("projection", projection);
+        grassShader.setMat4("view", view);
+        grassShader.setVec3("viewPos", programState->camera.Position);
+        grassShader.setVec3("lightPos", pointLight.position);
 
+
+        /*glm::mat4 model = glm::mat4(1.0f);
+        model= glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
+        model = glm::scale(model, glm::vec3(5.0f, 5.0f, 5.0f));
+        grassShader.setMat4("model", model);
+        kocka.Draw(grassShader);*/
 
 
         if (programState->ImGuiEnabled)
@@ -357,6 +437,11 @@ int main() {
         glDrawArrays(GL_TRIANGLES, 0, 36);
         glBindVertexArray(0);
         glDepthFunc(GL_LESS); // set depth function back to default
+
+
+        //std::cout << (blinn ? "Blinn-Phong" : "Phong") << std::endl;
+
+
 
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
@@ -425,6 +510,16 @@ void processInput(GLFWwindow *window) {
         programState->camera.ProcessKeyboard(LEFT, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         programState->camera.ProcessKeyboard(RIGHT, deltaTime);
+
+    if (glfwGetKey(window, GLFW_KEY_B) == GLFW_PRESS && !blinnKeyPressed)
+    {
+        blinn = !blinn;
+        blinnKeyPressed = true;
+    }
+    if (glfwGetKey(window, GLFW_KEY_B) == GLFW_RELEASE)
+    {
+        blinnKeyPressed = false;
+    }
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
@@ -490,6 +585,53 @@ void DrawImGui(ProgramState *programState) {
 
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+}
+// utility function for loading a 2D texture from file
+// ---------------------------------------------------
+unsigned int loadTexture(char const * path, bool gammaCorrection)
+{
+    unsigned int textureID;
+    glGenTextures(1, &textureID);
+
+    int width, height, nrComponents;
+    unsigned char *data = stbi_load(path, &width, &height, &nrComponents, 0);
+    if (data)
+    {
+        GLenum internalFormat;
+        GLenum dataFormat;
+        if (nrComponents == 1)
+        {
+            internalFormat = dataFormat = GL_RED;
+        }
+        else if (nrComponents == 3)
+        {
+            internalFormat = gammaCorrection ? GL_SRGB : GL_RGB;
+            dataFormat = GL_RGB;
+        }
+        else if (nrComponents == 4)
+        {
+            internalFormat = gammaCorrection ? GL_SRGB_ALPHA : GL_RGBA;
+            dataFormat = GL_RGBA;
+        }
+
+        glBindTexture(GL_TEXTURE_2D, textureID);
+        glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, dataFormat, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        stbi_image_free(data);
+    }
+    else
+    {
+        std::cout << "Texture failed to load at path: " << path << std::endl;
+        stbi_image_free(data);
+    }
+
+    return textureID;
 }
 
 void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods) {
