@@ -29,6 +29,7 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
 // settings
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
+float heightScale = 0.1;
 
 //blin
 bool blinn = false;
@@ -184,41 +185,64 @@ int main() {
     // build and compile shaders
     // -------------------------
     Shader ourShader("resources/shaders/model_lighting.vs", "resources/shaders/model_lighting.fs");
-    Shader blendingShader("resources/shaders/blending.fs", "resources/shaders/blending.vs");
+    Shader blendingShader("resources/shaders/blending.vs", "resources/shaders/blending.fs");
     Shader skyboxShader("resources/shaders/skybox.vs", "resources/shaders/skybox.fs");
     Shader grassShader("resources/shaders/normal_mapping.vs", "resources/shaders/normal_mapping.fs");
+    Shader parallaxShader("resources/shaders/parallax_mapping.vs", "resources/shaders/parallax_mapping.fs");
+
+
+
+    parallaxShader.setInt("diffuseMap", 0);
+    parallaxShader.setInt("normbaseSalMap", 1);
+    parallaxShader.setInt("depthMap", 2);
 
    //tekstura za normal mapping
     unsigned int diffuseMap = loadTexture(FileSystem::getPath("resources/textures/ground_0040_color_2k.jpg").c_str(),
                                           true);
     unsigned int normalMap  = loadTexture(FileSystem::getPath("resources/textures/ground_0040_normal_opengl_2k.png").c_str(),
                                           true);
-
+   //tekstura za igrace
     unsigned int plava  = loadTexture(FileSystem::getPath("resources/textures/plastic_0010_color_2k.jpg").c_str(),true);
+    unsigned int zelena = loadTexture(FileSystem::getPath("resources/textures/fabrics_0075_color_2k.jpg").c_str(), true);
+    //tekstura za parallax mapping
+    unsigned int parallaxTexD = loadTexture(FileSystem::getPath("resources/textures/fabrics_0051_color_2k.jpg").c_str(), true);
+    unsigned int parallaxTexeN = loadTexture(FileSystem::getPath("resources/textures/fabrics_0051_normal_opengl_2k.png").c_str(), true);
+    unsigned int parallaxTexH = loadTexture(FileSystem::getPath("resources/textures/fabrics_0051_height_2k.png").c_str(), true);
+
 
     // load models
     // -----------
 
     Model drvo("resources/objects/Tree/Tree.obj");
-    Model zensko("resources/objects/Bobblehead__Tennis_Player_woman_v1_L1.12a9593712-f912-48d6-8b56-c6f4fa6dd940/18649 Bobblehead - Tennis Player, woman_v1_NEW.obj");
-    Model musko("resources/objects/Bobblehead_Tennis_Player_man_v1_L1.123cbff6d95d-687c-43bc-959f-2319790f3e39/18650_Bobblehead_Tennis_Player_man_v1.obj");
+    Model zensko("resources/objects/Tennis_Player_woman/18649 Bobblehead - Tennis Player, woman_v1_NEW.obj");
+    Model musko("resources/objects/Tennis_Player_man/18650_Bobblehead_Tennis_Player_man_v1.obj");
     Model kocka("resources/objects/kocka/uploads_files_2904624_cube.obj");
+    Model mreza("resources/objects/Mreza/Volley Ball Net.obj");
+    Model lopta("resources/objects/tennisball/uploads_files_3657886_ball.obj");
+
+
+    // sejder za normal mapping
+    grassShader.use();
+    grassShader.setInt("diffuseMap", 0);
+    grassShader.setInt("normalMap", 1);
 
 
     drvo.SetShaderTextureNamePrefix("material.");
     zensko.SetShaderTextureNamePrefix("material.");
     musko.SetShaderTextureNamePrefix("material.");
     kocka.SetShaderTextureNamePrefix("material.");
+    mreza.SetShaderTextureNamePrefix("material.");
+    lopta.SetShaderTextureNamePrefix("material.");
 
     DirLight& dirLight = programState->dirLight;
-    dirLight.direction = glm::vec3( 0.0f, 30.0f, 40.0f);
+    dirLight.direction = glm::vec3( 0.0f, 10.0f, 0.0f);
     dirLight.ambient = glm::vec3(0.05f, 0.05f, 0.05f);
-    dirLight.diffuse = glm::vec3(0.8f, 0.8f, 0.8f);
+    dirLight.diffuse = glm::vec3(0.9f, 0.9f, 0.9f);
     dirLight.specular = glm::vec3(0.5f, 0.5f, 0.5f);
 
 
     PointLight& pointLight = programState->pointLight;
-    pointLight.position = glm::vec3(4.0f, 4.0, 0.0);
+    pointLight.position = glm::vec3(2.0f, 10.0, 0.0);
     pointLight.ambient = glm::vec3(0.1, 0.1, 0.1);
     pointLight.diffuse = glm::vec3(0.6, 0.6, 0.6);
     pointLight.specular = glm::vec3(1.0, 1.0, 1.0);
@@ -226,6 +250,13 @@ int main() {
     pointLight.constant = 1.0f;
     pointLight.linear = 0.09f;
     pointLight.quadratic = 0.032f;
+
+    float koordinateZaLoptu[] {
+            ( 0.0f, 0.5f,  1.5f),
+            (-4.0f, 0.5f, -3.0f),
+            (3.0f, 0.5f,  1.0f),
+            (-0.8f,  2.4f, -1.0f)
+    };
 
 
 
@@ -362,63 +393,92 @@ int main() {
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, plava);
         glm::mat4 model1 = glm::mat4(1.0f);
-        model1 = glm::translate(model1,glm::vec3(-2.0f,-2.0f,1.0f)); // translate it down so it's at the center of the scene
+        model1 = glm::translate(model1,glm::vec3(-2.3f,-2.0f,1.0f)); // translate it down so it's at the center of the scene
         model1 = glm::rotate(model1, float(-1.5708f),glm::vec3(1.0f, 0.0f, 0.0f));
-        model1 = glm::scale(model1, glm::vec3(0.1f));    // it's a bit too big for our scene, so scale it down
+        model1 = glm::scale(model1, glm::vec3(0.15f));    // it's a bit too big for our scene, so scale it down
         ourShader.setMat4("model", model1);
         zensko.Draw(ourShader);
 
         glm::mat4 model2 = glm::mat4(1.0f);
-        model2 = glm::translate(model2,glm::vec3(1.0f,-2.5f,-1.0f)); // translate it down so it's at the center of the scene
+        model2 = glm::translate(model2,glm::vec3(1.0f,-2.0f,1.0f)); // translate it down so it's at the center of the scene
         model2 = glm::rotate(model2, float(-1.5708f),glm::vec3(1.0f, 0.0f, 0.0f));
         model2 = glm::rotate(model2, float(-0.5708f),glm::vec3(0.0f, 0.0f, 1.0f));
         model2 = glm::scale(model2, glm::vec3(0.1f));// it's a bit too big for our scene, so scale it down
         ourShader.setMat4("model", model2);
         musko.Draw(ourShader);
 
+
+
+        //parallax
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, parallaxTexD);
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, parallaxTexeN);
+        glActiveTexture(GL_TEXTURE2);
+        glBindTexture(GL_TEXTURE_2D, parallaxTexH);
+
+        parallaxShader.use();
+        parallaxShader.setMat4("projection", projection);
+        parallaxShader.setMat4("view", view);
+        parallaxShader.setVec3("viewPos", programState->camera.Position);
+        parallaxShader.setVec3("lightPos", pointLight.position);
+        parallaxShader.setFloat("heightScale", heightScale);
+
+        glm::mat4 model3 = glm::mat4(1.0f);
+        model3 = glm::translate(model3, glm::vec3(0.0f, -2.3f, 1.0f)); // translate it down so it's at the center of the scene
+        model3 = glm::rotate(model3, float(-1.5708f),glm::vec3(0.0f, 1.0f, 0.0f));
+        model3= glm::scale(model3, glm::vec3(0.005f, 0.005f, 0.005f));	// it's a bit too big for our scene, so scale it down
+        parallaxShader.setMat4("model", model3);
+        mreza.Draw(parallaxShader);
+
+
+
+        ourShader.use();
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, zelena);
+
+
+            glm::mat4 model4 = glm::mat4(1.0f);
+            model4 = glm::translate(model4, glm::vec3(2.0f, 2*sin(glfwGetTime()), 1.0f)); // translate it down so it's at the center of the scene
+            model4 = glm::rotate(model4, (float)(sin(glfwGetTime())), glm::vec3(1.0f, 0.0f, 0.0f));
+
+            model4 = glm::scale(model4, glm::vec3(0.09f, 0.09f, 0.09f));	// it's a bit too big for our scene, so scale it down
+            ourShader.setMat4("model", model4);
+            lopta.Draw(ourShader);
+
+
+
+
         blendingShader.use();
+        blendingShader.setMat4("projection", projection);
+        blendingShader.setMat4("view", view);
 
         glm::mat4 model0 = glm::mat4(1.0f);
-        model0 = glm::translate(model0, glm::vec3(0.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
+        model0 = glm::translate(model0, glm::vec3(0.5f, -2.0f, -0.5f)); // translate it down so it's at the center of the scene
         model0 = glm::scale(model0, glm::vec3(1.0f, 1.0f, 1.0f));	// it's a bit too big for our scene, so scale it down
-        ourShader.setMat4("model", model0);
+        blendingShader.setMat4("model", model0);
         drvo.Draw(blendingShader);
+
+
+
+        //ourShader.use();
 
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, diffuseMap);
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, normalMap);
-
-        glm::mat4 model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(0.0f, -4.0f, 0.0f)); // translate it down so it's at the center of the scene
-        model = glm::scale(model, glm::vec3(1.8f, 1.8f, 1.8f));	// it's a bit too big for our scene, so scale it down
-        ourShader.setMat4("model", model);
-        kocka.Draw(ourShader);
-
-        // render the loaded model
-       /* glm::mat4 model = glm::mat4(1.0f);
-        model = glm::translate(model,
-                               glm::vec3(0.0f,0.0f,0.0f)); // translate it down so it's at the center of the scene
-        model = glm::scale(model, glm::vec3(2.0f));    // it's a bit too big for our scene, so scale it down
-        ourShader.setMat4("model", model);
-        ourModel.Draw(ourShader);*/
-
-
-
-
-
-       grassShader.use();
+        grassShader.use();
         grassShader.setMat4("projection", projection);
         grassShader.setMat4("view", view);
         grassShader.setVec3("viewPos", programState->camera.Position);
         grassShader.setVec3("lightPos", pointLight.position);
 
-
-        /*glm::mat4 model = glm::mat4(1.0f);
-        model= glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
-        model = glm::scale(model, glm::vec3(5.0f, 5.0f, 5.0f));
+        glm::mat4 model = glm::mat4(1.0f);
+        model = glm::translate(model, glm::vec3(0.0f, -4.0f, 0.0f)); // translate it down so it's at the center of the scene
+        model = glm::scale(model, glm::vec3(2.8f, 1.8f, 2.8f));	// it's a bit too big for our scene, so scale it down
         grassShader.setMat4("model", model);
-        kocka.Draw(grassShader);*/
+        kocka.Draw(grassShader);
+
 
 
         if (programState->ImGuiEnabled)
