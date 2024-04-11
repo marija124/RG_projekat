@@ -7,7 +7,7 @@ Iz oblasto B: Normal Mapping, Parallax Mapping
 
 Po sceni se moze kreati  misem, kao i tasterima a, s ,d i w.
 Pritiskom na dugme B ukljucuje se Blinn-Phong osvetljenje.
-Pritiskom na dugme L intezitet svetla se pojacava dva puta.
+Pritiskom na dugme Y intezitet svetla se pojacava dva puta.
 
 
 

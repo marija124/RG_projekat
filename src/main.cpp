@@ -188,7 +188,7 @@ int main() {
 
     // build and compile shaders
     // -------------------------
-    Shader ourShader("resources/shaders/model_lighting.vs", "resources/shaders/model_lighting.fs");
+    Shader ourShader("resources/shaders/lighting.vs", "resources/shaders/lighting.fs");
     Shader blendingShader("resources/shaders/blending.vs", "resources/shaders/blending.fs");
     Shader skyboxShader("resources/shaders/skybox.vs", "resources/shaders/skybox.fs");
     Shader grassShader("resources/shaders/normal_mapping.vs", "resources/shaders/normal_mapping.fs");
@@ -644,12 +644,12 @@ void processInput(GLFWwindow *window) {
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         programState->camera.ProcessKeyboard(RIGHT, deltaTime);
 
-    if(glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS && !switchLightKeyPressed)
+    if(glfwGetKey(window, GLFW_KEY_Y) == GLFW_PRESS && !switchLightKeyPressed)
     {
         switchLight = !switchLight;
         switchLightKeyPressed = true;
     }
-    if(glfwGetKey(window, GLFW_KEY_L) == GLFW_RELEASE)
+    if(glfwGetKey(window, GLFW_KEY_Y) == GLFW_RELEASE)
     {
         switchLightKeyPressed = false;
     }
@@ -663,6 +663,7 @@ void processInput(GLFWwindow *window) {
     {
         blinnKeyPressed = false;
     }
+
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
