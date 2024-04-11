@@ -201,14 +201,11 @@ int main() {
     unsigned int normalMap  = loadTexture(FileSystem::getPath("resources/textures/ground_0040_normal_opengl_2k.png").c_str(),
                                           true);
 
-   //tekstura za igrace
+   //teksture za modele
     unsigned int plava  = loadTexture(FileSystem::getPath("resources/textures/plastic_0010_color_2k.jpg").c_str(),true);
-
     unsigned int zelena = loadTexture(FileSystem::getPath("resources/textures/fabrics_0075_color_2k.jpg").c_str(), true);
-
     unsigned int kockaT = loadTexture(FileSystem::getPath("resources/textures/tiles_0065_2k_qnOZvz/tiles_0065_color_2k.jpg").c_str(),true);
     unsigned int bela = loadTexture(FileSystem::getPath("resources/textures/fabrics_0051_color_2k.jpg").c_str(),true);
-
     unsigned int klp = loadTexture(FileSystem::getPath("resources/objects/klupa/ConcreteBench.jpg").c_str(), true);
 
     //tekstura za parallax mapping
@@ -222,9 +219,9 @@ int main() {
     parallaxShader.setInt("depthMap", 2);
 
     glm:: vec3 lightPos(0.5f,1.0f,0.3f);
+
     // load models
     // -----------
-
     Model drvo("resources/objects/Tree/Tree.obj");
     Model zensko("resources/objects/Tennis_Player_woman/18649 Bobblehead - Tennis Player, woman_v1_NEW.obj");
     Model musko("resources/objects/Tennis_Player_man/18650_Bobblehead_Tennis_Player_man_v1.obj");
@@ -248,7 +245,7 @@ int main() {
     klupa.SetShaderTextureNamePrefix("material.");
 
     DirLight& dirLight = programState->dirLight;
-    dirLight.direction = glm::vec3( 10.0f, 10.0f, 0.0f);
+    dirLight.direction = glm::vec3( 10.0f, 10.0f, 10.0f);
     dirLight.ambient = glm::vec3(0.05f, 0.05f, 0.05f);
     dirLight.diffuse = glm::vec3(0.9f, 0.9f, 0.9f);
     dirLight.specular = glm::vec3(0.5f, 0.5f, 0.5f);
@@ -257,12 +254,12 @@ int main() {
     PointLight& pointLight = programState->pointLight;
     pointLight.position = glm::vec3(0.0f, 0.0, 0.0);
     pointLight.ambient = glm::vec3(0.1, 0.1, 0.1);
-    pointLight.diffuse = glm::vec3(0.6, 0.6, 0.6);
+    pointLight.diffuse = glm::vec3(0.7, 0.7, 0.7);
     pointLight.specular = glm::vec3(1.0, 1.0, 1.0);
 
     pointLight.constant = 1.0f;
-    pointLight.linear = 0.09f;
-    pointLight.quadratic = 0.032f;
+    pointLight.linear = 0.08f;
+    pointLight.quadratic = 0.035f;
 
 
 
@@ -507,9 +504,6 @@ int main() {
         model9 = glm::scale(model9, glm::vec3(2.8f, 1.8f, 2.8f));	// it's a bit too big for our scene, so scale it down
         ourShader.setMat4("model", model9);
         kocka.Draw(ourShader);
-
-
-
 
 
     //crtaj skybox
