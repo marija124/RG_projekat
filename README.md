@@ -1,6 +1,18 @@
 
 # Uputstvo
 
+Projekat sadrzi sve teme iz oblasti do osmog casa.
+Iz oblasti A: Cubemaps
+Iz oblasto B: Normal Mapping, Parallax Mapping
+
+Po sceni se moze kreati  misem, kao i tasterima a, s ,d i w.
+Pritiskom na dugme B ukljucuje se Blinn-Phong osvetljenje.
+Pritiskom na dugme L intezitet svetla se pojacava dva puta.
+
+
+
+# Resources
+
 tekstura za skybox generisana na https://tools.wwwtyro.net/space-3d/index.html#animationSpeed=1&fov=80&nebulae=true&pointStars=true&resolution=1024&seed=5uujtc9bfbls&stars=true&sun=false
 
 tekstura za mrezu:https://www.texturecan.com/details/326/
