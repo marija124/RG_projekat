@@ -3,7 +3,7 @@
 
 Projekat sadrzi sve teme iz oblasti do osmog casa.
 Iz oblasti A: Cubemaps
-Iz oblasto B: Normal Mapping, Parallax Mapping
+Iz oblasti B: Normal Mapping, Parallax Mapping
 
 Po sceni se moze kreati  misem, kao i tasterima a, s ,d i w.
 Pritiskom na dugme B ukljucuje se Blinn-Phong osvetljenje.
