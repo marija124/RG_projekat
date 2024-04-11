@@ -209,13 +209,16 @@ int main() {
     unsigned int kockaT = loadTexture(FileSystem::getPath("resources/textures/tiles_0065_2k_qnOZvz/tiles_0065_color_2k.jpg").c_str(),true);
     unsigned int bela = loadTexture(FileSystem::getPath("resources/textures/fabrics_0051_color_2k.jpg").c_str(),true);
 
+    unsigned int klp = loadTexture(FileSystem::getPath("resources/objects/klupa/ConcreteBench.jpg").c_str(), true);
+
     //tekstura za parallax mapping
     unsigned int parallaxTexD = loadTexture(FileSystem::getPath("resources/textures/bricks_0022_2k_yJxLPp/bricks_0022_color_2k.jpg").c_str(), true);
     unsigned int parallaxTexeN = loadTexture(FileSystem::getPath("resources/textures/bricks_0022_2k_yJxLPp/bricks_0022_normal_opengl_2k.png").c_str(), true);
     unsigned int parallaxTexH = loadTexture(FileSystem::getPath("resources/textures/bricks_0022_2k_yJxLPp/bricks_0022_height_2k.png").c_str(), true);
 
+    parallaxShader.use();
     parallaxShader.setInt("diffuseMap", 0);
-    parallaxShader.setInt("normbaseSalMap", 1);
+    parallaxShader.setInt("normalMap", 1);
     parallaxShader.setInt("depthMap", 2);
 
     glm:: vec3 lightPos(0.5f,1.0f,0.3f);
@@ -357,8 +360,6 @@ int main() {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 
-
-        // don't forget to enable shader before setting uniforms
         ourShader.use();
         float time = glfwGetTime();
 
@@ -446,6 +447,8 @@ int main() {
         blendingShader.setMat4("model", model0);
         drvo.Draw(blendingShader);
 
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, klp);
         glm::mat4 model7 = glm::mat4(1.0f);
         model7 = glm::translate(model7, glm::vec3(-1.0f, -2.2f, -0.9f)); // translate it down so it's at the center of the scene
         model7 = glm::rotate(model7, float(-1.5708f),glm::vec3(1.0f, 0.0f, 0.0f));
@@ -470,7 +473,7 @@ int main() {
         parallaxShader.setFloat("heightScale", heightScale);
 
         glm::mat4 model6 = glm::mat4(1.0f);
-        model6 = glm::translate(model6, glm::vec3(-0.6f, -2.19f, -1.3f));
+        model6 = glm::translate(model6, glm::vec3(-0.8f, -2.19f, -1.3f));
         model6 = glm::rotate(model6, float(-1.5708f),glm::vec3(1.0f, 0.0f, 0.0f));
         model6 = glm::scale(model6, glm::vec3(0.7f));
         parallaxShader.setMat4("model", model6);
