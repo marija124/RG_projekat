@@ -1,7 +1,7 @@
 
 # Uputstvo
 
-Projekat sadrzi sve teme iz oblasti do osmog casa.
+Projekat sadrzi sve teme iz oblasti do osmog casa, kao i Blending, Face culling i Advanced lighting.
 Iz oblasti A: Cubemaps
 Iz oblasti B: Normal Mapping, Parallax Mapping
 
