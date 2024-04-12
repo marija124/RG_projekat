@@ -19,7 +19,10 @@ tekstura za mrezu:https://www.texturecan.com/details/326/
 
 tekstura za lopticu:https://www.texturecan.com/details/527/
 
-tekstura za kocku:https://www.texturecan.com/details/469/
+tekstura za kocku:https://www.texturecan.com/details/468/
+tekstura za Parallax Mapping: https://www.texturecan.com/details/434/
+
+tekstura za Normal Mapping: https://www.texturecan.com/details/469/
 
 
 model tenisera 1: https://free3d.com/3d-model/bobblehead-tennis-player-man-v1--953192.html
@@ -33,6 +36,8 @@ model drveta:https://free3d.com/3d-model/tree-74556.html
 model loptice:https://www.turbosquid.com/3d-models/3d-baseball-ball-model-2147142
 
 model mreze:https://sketchfab.com/3d-models/volleyball-net-no-texture-8e091ebdaa074c8c878bed3e074e8250
+
+model klupe:https://free3d.com/3d-model/concretebench--425396.html
 
 
 
